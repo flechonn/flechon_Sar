@@ -1,31 +1,31 @@
-# Overview
-This document specifies a message delivery system where instances can connect to a channel, send small messages, and ensure that all messages are delivered and read. 
 
-Instances can connect and disconnect from the channel at any time, with messages being delivered when they reconnect.
+# Overview: Broker / Channel
 
-## Requirements
+A channel is a communication channel, a point-to-point stream of bytes.
+Full-duplex, each end point can be used to read or write.
+A connected channel is FIFO and lossless, see Section "Disconnecting"
+for details about disconnection.
 
-### 1. Channel
-- The system includes a **channel** that manages communication between multiple **instances**.
-- The channel will ensure **message delivery** to all connected instances.
-- All messages must be **delivered and read** by the intended instances.
+The typical use of channels is by two tasks to establish a full-duplex communication. However, there is no ownership between channel and tasks, any task may read or write in any channel it has the reference to. The following rules apply:
 
-### 2. Instances
-- **Instances** can connect or disconnect from the channel at any time.
-- Each instance can send **small messages** with a size limit of **255 characters**.
+- It is entirely thread-safe for the two tasks to read or write at   either end point of the channels concurrently. 
+- Locally, at one end point, two tasks, one reading and the other writing, operating concurrently is safe also. 
+- However, concurrent read operations or concurrent write operations are not safe on the same end point.  
 
-### 3. Connectivity
-- Instances can **connect** to the channel at any time.
-- Instances can **disconnect** and **reconnect** 
-- The channel must manage the state (connected/disconnected) of each instance.
+A channel is either connected or disconnected. It is created connected and it becomes disconnected when either side requests a disconnect. There is no notion of the end of stream for a connected stream. To mark the end of a stream, the corresponding channel is simply disconnected.
 
-### 4. Message Size
-- The maximum size of each message is **255 characters**.
-- Messages exceeding this size will be **rejected** by the channel.
+# Connecting
 
-## Use Cases
+A channel is established, in a fully connected state, when a connect 
+matches an accept. When connecting, the given name is the one of the remote broker, the given port is the one of an accept on that remote broker.
 
-### 1. Sending a Message
-- An instance connects to the channel
-- An instance sends a message (max size: 255 characters) to the channel.
-- The channel delivers it to connected instances
+There is no precedence between connect and accept, this is a symmetrical rendez-vous: the first operation waits for the second one. Both accept and connect operations are therefore blocking calls, blocking until the rendez-vous happens, both returning a fully connected and usable full-duplex channel.
+
+When connecting, we may want to distinguish between two cases:
+(i) there is no accept yet and (ii) there is not such broker. 
+When the named broker does not exist, the connect returns null, 
+but if the remote broker is found, the connect blocks until 
+there is a matching accept otherwise so that a channel can be
+constructed and returned. 
+
+Note: we could consider introducing a timeout here, limiting the wait for the rendez-vous to happen.
