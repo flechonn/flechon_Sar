@@ -10,17 +10,16 @@ abstract class Broker {
     Broker(String name) {
         this.name = name;
     }
-    /*
-    When connecting, we may want to distinguish between two cases:
-    (i) there is no accept yet 
-    (ii) there is not such broker. 
-    When the named broker does not exist, the connect returns null, 
-    but if the remote broker is found, the connect blocks until 
-    there is a matching accept otherwise so that a channel can be
-    constructed and returned. 
-     */
 
     /**
+     * When connecting, we may want to distinguish between two cases:
+     * (i) there is no accept yet 
+     * (ii) there is not such broker. 
+     * When the named broker does not exist, the connect returns null, 
+     * but if the remote broker is found, the connect blocks until 
+     * there is a matching accept otherwise so that a channel can be
+     * constructed and returned. 
+     *
      * Accepts an incoming connection on the specified port.
      * 
      * @param port The port number on which to accept the connection.

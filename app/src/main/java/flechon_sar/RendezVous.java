@@ -1,6 +1,6 @@
 package flechon_sar;
 
-public class Rendezvous {
+public class RendezVous {
     private Broker connectedBroker = null;
     private Broker acceptingBroker = null;
     private boolean isChannelEstablished = false;
