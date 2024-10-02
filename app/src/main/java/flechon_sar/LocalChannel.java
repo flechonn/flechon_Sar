@@ -1,21 +1,23 @@
 package flechon_sar;
 
 public class LocalChannel extends Channel {
-    private int position = 0;
+    private int port; // for debugging purposes
     private boolean isDisconnected = false;
-    public CircularBuffer circularBuffer = new CircularBuffer(1024);
+    public boolean isDangeling = false;
+    public CircularBuffer data = new CircularBuffer(1024);
 
-    LocalChannel readChannel;
+    LocalChannel OppositeChannel;
     
-    public LocalChannel(Channel rChannel) {
+    public LocalChannel(Channel oChannel, int port) {
         super();
-        this.readChannel = (LocalChannel) rChannel;
+        this.port = port;
+        this.OppositeChannel = (LocalChannel) oChannel;
     }
 
     @Override
     synchronized int read(byte[] bytes, int offset, int length) {
         // Wait until there is some data to read
-        while (this.readChannel.circularBuffer.empty() && !disconnected()) {
+        while (this.OppositeChannel.data.empty() && !disconnected()) {
             try {
                 wait();
             } catch (InterruptedException e) {
@@ -29,8 +31,8 @@ public class LocalChannel extends Channel {
 
         // Calculate how many bytes we can actually read
         int bytesRead = 0;
-        for (int i = 0; i < length && !this.readChannel.circularBuffer.empty(); i++) {
-            bytes[offset + i] = this.readChannel.circularBuffer.pull();
+        for (int i = 0; i < length && !this.OppositeChannel.data.empty(); i++) {
+            bytes[offset + i] = this.OppositeChannel.data.pull();
             bytesRead++;
         }
 
@@ -48,8 +50,12 @@ public class LocalChannel extends Channel {
         int bytesWritten = 0;
     
         while (bytesWritten < length) {
+
+            if(disconnected()) {
+               return bytesWritten; 
+            }
             // Wait while the buffer is full, but check for disconnection
-            while (circularBuffer.full()) {
+            while (this.OppositeChannel.data.full()) {
                 if (disconnected()) {
                     return -1; // Return -1 if the channel is disconnected
                 }
@@ -62,7 +68,7 @@ public class LocalChannel extends Channel {
             }
     
             // Write a single byte at a time to the buffer
-            circularBuffer.push(bytes[offset + bytesWritten]);
+            this.OppositeChannel.data.push(bytes[offset + bytesWritten]);
             bytesWritten++;
             // Notify any waiting readers that data is available
             notifyAll();
@@ -73,13 +79,21 @@ public class LocalChannel extends Channel {
 
     @Override
     void disconnect() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'disconnect'");
+        synchronized (this) {
+            if (this.isDisconnected) {
+                return;
+            }
+            this.isDisconnected = true;
+            notifyAll();
+        }
+        synchronized (OppositeChannel) {
+            OppositeChannel.notifyAll();
+        }
     }
 
     @Override
     boolean disconnected() {
-        return this.isDisconnected;
+        return this.isDisconnected || this.OppositeChannel.isDisconnected;
     }
     
 }

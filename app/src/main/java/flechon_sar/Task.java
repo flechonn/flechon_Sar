@@ -2,7 +2,7 @@ package flechon_sar;
 /**
  * A task is a thread that can be executed by a broker.
  */
-abstract class Task extends Thread {
+public class Task extends Thread {
     Broker broker;
     /**
      * Constructs a Task object with the given Broker and Runnable.
@@ -10,8 +10,9 @@ abstract class Task extends Thread {
      * @param b The Broker object associated with the task.
      * @param r The Runnable object representing the task to be executed.
      */
-    Task(Broker b, Runnable r){
-        throw new UnsupportedOperationException("Should be overridden");
+    public Task(Broker b, Runnable task){
+        super(task);
+        this.broker = b;
     }
 
     /**
@@ -19,7 +20,11 @@ abstract class Task extends Thread {
      *
      * @return the broker.
      */
-    static Broker getBroker(){
-        throw new UnsupportedOperationException("Should be overridden");
+    public static Broker getBroker(){
+        Thread currentThread = Thread.currentThread();
+        if(currentThread instanceof Task){
+            return ((Task)currentThread).broker;
+        }
+        throw new UnsupportedOperationException("this is not a task");
     }
 }

@@ -8,7 +8,7 @@ public class BrockerManager {
 
     private static BrockerManager self;
 
-    static BrockerManager getInstance(){
+    public static BrockerManager getInstance(){
         if(self == null){
             self = new BrockerManager();
         }
@@ -19,17 +19,17 @@ public class BrockerManager {
         brokers = new HashMap<String,Broker>();
     }
 
-    public synchronized static void addBroker(Broker broker){
+    public synchronized void addBroker(Broker broker){
         String name = broker.name;
         Broker b = brokers.get(name);
         if(b != null){
             throw new IllegalArgumentException("Broker with name " + name + " already exists");
         }
-        brokers.put(broker.name, broker);
+        brokers.put(name, broker);
     }
 
-    public synchronized static void removeBroker(String name){
-        brokers.remove(name);
+    public synchronized void removeBroker(Broker broker){
+        brokers.remove(broker.name);
     }
 
     public synchronized static Broker getBroker(String name){

@@ -24,8 +24,9 @@ abstract class Broker {
      * 
      * @param port The port number on which to accept the connection.
      * @return The channel representing the accepted connection.
+     * @throws InterruptedException 
      */
-    abstract Channel accept(int port);
+    abstract Channel accept(int port) throws InterruptedException;
 
     /**
      * Connects to a specified host and port.
@@ -33,6 +34,7 @@ abstract class Broker {
      * @param host the host to connect to
      * @param port the port to connect to
      * @return the channel representing the connection
+     * @throws InterruptedException 
      */
-    abstract Channel connect(String host, int port);
+    abstract Channel connect(String host, int port) throws InterruptedException;
 }
